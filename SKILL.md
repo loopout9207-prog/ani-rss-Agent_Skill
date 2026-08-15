@@ -1,6 +1,6 @@
 ---
 name: ani-rss-Agent_Skill
-description: 通过 ani-rss-Agent_Skill（基于 ANI-RSS REST API 的命令行工具）自动追番、订阅番剧。当用户想订阅/添加番剧、搜索 Mikan/AniBT/AnimeGarden 资源、管理 ani-rss 订阅（查看/启用/停用/删除/刷新/批量导入）、预览番剧订阅命中时，使用此 skill。
+description: 通过 ani-rss-Agent_Skill（基于 ANI-RSS REST API 的命令行工具）自动追番、订阅番剧。当用户想订阅/添加番剧、搜索 Mikan/AniBT/AnimeGarden 资源、管理 ani-rss 订阅（查看/启用/停用/删除/刷新/批量导入）、预览番剧订阅命中、切换下载版本/强制重新下载时，使用此 skill。
 ---
 
 # ANI-RSS 番剧订阅 CLI
@@ -70,7 +70,8 @@ python3 "$CLI" config status
 python3 "$CLI" mikan search "葬送的芙莉莲"
 
 # 2) 查看该番剧的字幕组与 RSS（拿到 RSS 地址用于订阅）
-python3 "$CLI" mikan groups "https://mikanani.me/Home/Bangumi/3828"
+#    加 --items 可同时列出每个字幕组已上传资源的标题，便于挑选同一字幕组内的不同版本（如 720P/1080P、HEVC 等）
+python3 "$CLI" mikan groups "https://mikanani.me/Home/Bangumi/3828" --items
 
 # 3) 预览订阅命中（确认会下载哪些集、下载目录）
 python3 "$CLI" preview --url "https://mikanani.me/RSS/Bangumi?bangumiId=3828&subgroupid=370" \
@@ -81,6 +82,31 @@ python3 "$CLI" subscribe --url "https://mikanani.me/RSS/Bangumi?bangumiId=3828&s
     --type mikan --title "葬送的芙莉莲" --preview --no-confirm
 ```
 
+### 筛选同一字幕组内的不同版本（标题关键词匹配）
+
+同一个字幕组可能同时上传多个版本（如 720P、1080P、4K，或 x264/x265/HEVC 压制）。选定字幕组后，可用 `--match` 按标题关键词精确筛选，只下载命中全部关键词的版本：
+
+```bash
+# 1) 先看字幕组上传了哪些版本（挑出版本特征关键词）
+python3 "$CLI" mikan groups "https://mikanani.me/Home/Bangumi/3828" --items
+
+# 2) 用 --match 过滤预览（只命中 1080P 和 HEVC 的资源才会显示并下载）
+python3 "$CLI" preview --url "https://mikanani.me/RSS/Bangumi?bangumiId=3828&subgroupid=370" \
+    --type mikan --subgroup 动漫国 --match 1080P --match HEVC --enable
+
+# 3) 确认无误后同样带上 --match 添加订阅
+python3 "$CLI" subscribe --url "https://mikanani.me/RSS/Bangumi?bangumiId=3828&subgroupid=370" \
+    --type mikan --title "葬送的芙莉莲" --subgroup 动漫国 --match 1080P --match HEVC \
+    --preview --no-confirm
+```
+
+要点：
+
+- `--match` 支持正则，默认区分大小写（项目用 `ReUtil.contains` 匹配标题），可重复指定多个，命中规则为"全部命中"。
+- 关键词提取示例：`1080P`、`HEVC`、`x265`、`WebRip`、`BDRip`；若字幕组版本间差异在文件名末尾（如 `-v2`），直接写特征片段即可。
+- 只做预览不落库用 `preview`；已添加的订阅可用 `set <id> --match 1080P` 追加覆盖匹配列表（`--match` 会整体替换原列表，空列表传 `--set match=[]` 可清空）。
+- `--exclude`（排除关键词）仍可配合使用：同一字幕组内想排除某版本时，用 `--set exclude=["720P","合集"]`。
+
 可选的高级参数（订阅时可覆盖生成配置）：
 
 - `--title <标题>` 覆盖番剧标题
@@ -88,6 +114,7 @@ python3 "$CLI" subscribe --url "https://mikanani.me/RSS/Bangumi?bangumiId=3828&s
 - `--offset <n>` 集数偏移
 - `--download-new` 只下载最新集
 - `--enable` / `--disable` 是否启用
+- `--match <关键词>` 可重复，按标题关键词（正则）过滤同一字幕组内的不同版本，**只有命中全部关键词的资源才会下载**（例：`--match 1080P --match HEVC` 只下 1080P+HEVC 的压制版）
 - `--set 字段=值` 可重复，覆盖任意 Ani 字段（例：`--set omit=true` 开启遗漏检测）
 - `--dry-run` 只生成订阅配置不落库；`--json` 输出原始 JSON
 
@@ -113,6 +140,7 @@ python3 "$CLI" enable <id>          # 启用（可多个）
 python3 "$CLI" disable <id>         # 停用（可多个）
 python3 "$CLI" delete <id> --delete-files   # 删除（可选同删文件）
 python3 "$CLI" set <id> --url <RSS> --subgroup <字幕组>  # 修改订阅字段（换字幕组等）
+python3 "$CLI" set <id> --match 1080P --match HEVC  # 覆盖标题匹配关键词（可重复）
 python3 "$CLI" set <id> --set enable=true   # 也可用 --set k=v 设任意字段；--dry-run 预览
 python3 "$CLI" refresh --all        # 刷新全部 RSS
 python3 "$CLI" refresh <id>         # 刷新单个
@@ -186,6 +214,43 @@ ANI-RSS 已内置 MCP Server，可按以下规则接入 AI 客户端。任何 Ag
 - 鉴权失败（未设 apiKey 或 Key 错误）时 MCP 连接会失败，请先 `config status` 排查 REST 鉴权，再检查 `MCP_ENABLED`。
 - 修改 opencode 配置后需重启 opencode 使 MCP 生效；配置语法可参照 `customize-opencode` skill。
 
+## 切换下载版本 / 强制重新下载
+
+> 适用场景：某番已下载过，但想换成指定字幕组/版本（如 `Baha`/`HEVC`/`1080P`）重新下载。单靠 `set --match` + 删文件 + `refresh` **常常无效**，原因见下方去重机制。本流程在实操中已验证（Windows PowerShell + plink 管理远端 Docker 部署）。
+
+### 为什么改了 match、删了文件还不重新下载（三层去重）
+
+ani-rss 对每个 RSS 命中项按顺序做"是否已下载"判断，**任一命中即跳过**：
+
+1. **已保存的种子记录**：`TorrentUtil.getTorrent()` 检查 `{config}/torrents/{pinyin首字母}/{title}/Season {season}/{infoHash}.torrent`（config 即 docker 挂载到 `/config` 的目录）。存在则跳过，且**只打 debug 日志**——表现为"删了文件、刷新后没有任何反应"。
+2. **qBittorrent 已有同名任务**：`itemDownloaded()` 按重命名后的任务名匹配。因重命名模板 `[${subgroup}] ${title} S${seasonFormat}E${episodeFormat}` 不含版本信息，**同集不同版本会重命名为同名**，旧版本任务会挡住新版本 → 日志 `已存在下载任务`。
+3. **下载目录已有该集视频** → 日志 `本地已存在`。
+
+### 强制重下 / 切换版本流程
+
+```bash
+# 1) 加版本过滤（--match 整体替换原列表；--set match=[] 可清空）
+wsl python3 <CLI> set <id> --match Baha
+
+# 2) 删除已下载视频文件（宿主机路径 = docker 挂载源）
+#    （如 /mnt/MediaDown/media/番剧/<标题>/Season 1/*.mkv）
+
+# 3) 清 qBittorrent 旧任务（含文件）——注意 deleteFiles 参数不可省略
+#    POST http://<host>:8080/api/v2/torrents/delete  hashes=a|b|c  deleteFiles=true
+
+# 4) 删 ani-rss 保存的种子记录（必须！否则步骤 5 无任何输出）
+#    rm -rf <config>/torrents/<pinyin首字母>/<标题>/Season <n>/
+
+# 5) 刷新并验证
+wsl python3 <CLI> refresh <id>
+#    容器日志出现 "添加下载" + "重命名 [组] ... (Baha ...) ==> ..." 即为成功
+sudo -n docker logs --tail 60 ani-rss | grep <标题关键词>
+```
+
+- 种子记录目录名用**标题拼音首字母**（如 `遭到流放...` → `Z/遭到流放.../Season 1`），两套命名都查一下：`{config}/torrents/{标题}/Season {season}` 或 `{config}/torrents/{pinyin}/{标题}/Season {season}`。
+- 若换的是**整个源**（而非同一字幕组内的版本），先用 `set <id> --url <RSS> --subgroup <组名>` 换源，再走步骤 2-5。
+- 远端 SSH/plink、Docker 命令、qBittorrent WebUI API、PowerShell-WSL 引号陷阱等底层操作，见文末「附录：远端服务器上的 ani-rss 运维」。
+
 ## 常见问题
 
 | 现象 | 处理 |
@@ -195,4 +260,50 @@ ANI-RSS 已内置 MCP Server，可按以下规则接入 AI 客户端。任何 Ag
 | 鉴权返回 `登录已失效` | login 模式会自动重登；确认用户名密码正确；api-key 模式下确认 apiKey 与 ani-rss 配置一致 |
 | `RSS解析失败` | RSS 地址不属于所选 `--type`，或用 `mikan groups` 重新获取规范 RSS 地址 |
 | 找不到番剧 | 加 `--year --season` 限定季度，或换 `bgm search` / `anibt list` 搜 |
+| 订阅后下载的不是想要的版本 | 用 `--match` 加标题关键词过滤（如 `1080P`、`HEVC`），先 `preview` 确认命中再订阅 |
+| `--match` 一个都没命中 | 关键词是正则且需全部命中，先 `mikan groups --items` 看实际标题，写版本特征片段 |
+| 改了 `--match` 或删了文件，刷新却不重新下载 | 三层去重：① 删 `{config}/torrents/{pinyin}/{title}/Season {n}/` 种子记录；② 清 qBittorrent 同名旧任务（`deleteFiles=true`）；③ 删下载目录视频；再 `refresh`（详见"切换下载版本 / 强制重新下载"） |
+| 想换另一个字幕组/版本重新下载 | `set <id> --match <版本关键词>`（换整个源则 `--url/--subgroup`），再按"强制重新下载"流程清理后刷新 |
 | Windows 下报 `python3 找不到` | 用 `wsl` 调用：`wsl python3 /mnt/c/.../ani_rss_cli.py <命令>` |
+
+## 附录：远端服务器上的 ani-rss 运维（Windows 侧）
+
+> 专用于管理**部署在远端（如 Docker）的 ani-rss 实例及其下载器 qBittorrent** 的底层操作。以下命令在 Windows PowerShell 中执行。
+
+### SSH 登录（plink）
+
+- Windows 自带 OpenSSH 不支持非交互式传密码，用 plink：`https://the.earth.li/~sgtatham/putty/latest/w64/plink.exe`
+- **首次连接必须用 `-hostkey` 指定服务器指纹**（从报错 `Cannot confirm a host key in batch mode` 里取 SHA256），否则中断。
+- 模板（密码占位，向用户索取）：
+
+```powershell
+& "C:\...\plink.exe" -batch -ssh dietpi@<host> -hostkey "SHA256:..." -pw "<密码>" "<远程命令>"
+```
+
+### Docker 命令（dietpi 用户需 `sudo -n`）
+
+```bash
+sudo -n docker ps
+sudo -n docker inspect ani-rss --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{println}}{{end}}'
+sudo -n docker logs --tail 60 ani-rss        # 看下载日志（"添加下载" / "重命名 ..." / "本地已存在"）
+```
+
+- ani-rss 容器挂载：`/mnt/MediaDown/media -> /Media`（番剧视频下载目录的宿主机路径）、`/mnt/Appdata/ani-rss -> /config`（**种子记录在 `/config/torrents/...`**）。
+- qbittorrent 容器与 ani-rss 共享 `/Media` 挂载（文件互通），WebUI 端口 8080。
+
+### qBittorrent WebUI API（ani-rss 的下载器）
+
+```bash
+# 登录拿 cookie（用户名密码从服务器 qBittorrent WebUI 配置读取）
+curl -s -c qbt.cookies -d 'username=<用户名>&password=<密码>' 'http://<host>:8080/api/v2/auth/login'
+# 列表（ani-rss 任务都在 category=ani-rss；magnet_uri 的 dn= 是原始种子名，需 URL 解码）
+curl -s -b qbt.cookies 'http://<host>:8080/api/v2/torrents/info?category=ani-rss'
+# 删除：hashes 用 | 分隔，且【必须带 deleteFiles】，否则报"缺少必需参数：deleteFiles"
+curl -s -b qbt.cookies -X POST --data-urlencode 'hashes=<hash1|hash2>' --data-urlencode 'deleteFiles=true' 'http://<host>:8080/api/v2/torrents/delete'
+```
+
+### PowerShell 调用 WSL 的坑
+
+- `wsl bash -c '...'` 内层单引号、`|` 管道、`>` 重定向、`&&` 会被 PowerShell 抢先解析 → **多步/含管道重定向的命令写成脚本文件放 WSL home 再 `wsl bash <script>` 执行**。
+- `wsl cmd > file` 的重定向会落到 Windows 侧；要写 WSL 内文件须在 WSL 内重定向（脚本内）。
+- 单条无重定向命令可直接 `wsl python3 /mnt/c/.../ani_rss_cli.py <命令>`（WSL 可访问 `/mnt/c/Users/...`）。

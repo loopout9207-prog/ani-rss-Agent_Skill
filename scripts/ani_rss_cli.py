@@ -12,7 +12,7 @@ ani-rss-cli — ANI-RSS 番剧订阅命令行工具
     ani_rss_cli.py mikan search "葬送的芙莉莲"
     ani_rss_cli.py mikan groups https://mikanani.me/Home/Bangumi/3828
     ani_rss_cli.py subscribe --url "https://mikanani.me/RSS/Bangumi?bangumiId=3828&subgroupid=370" \
-        --title "葬送的芙莉莲" --preview
+        --title "葬送的芙莉莲" --subgroup 动漫国 --match 1080P --match HEVC --preview
     ani_rss_cli.py list
     ani_rss_cli.py disable <id>
 
@@ -431,6 +431,12 @@ def cmd_mikan_groups(args):
             rx = regex.get("regex") or ""
             if rx:
                 print("   匹配正则: {}".format(rx))
+        if args.items:
+            print("   版本标题: ")
+            for it in g.get("items") or []:
+                t = it.get("title") or "-"
+                sz = it.get("formatSize") or ""
+                print("     - {}  {}".format(t, sz))
 
 
 def cmd_anibt(args):
@@ -561,6 +567,8 @@ def _build_ani(args, cfg):
         ani["offset"] = int(args.offset)
     if getattr(args, "download_new", False):
         ani["downloadNew"] = True
+    if getattr(args, "match", None):
+        ani["match"] = list(args.match)
     for kv in getattr(args, "set_fields", None) or []:
         if kv.count("=") != 1:
             raise CliError("--set 参数格式应为 key=value: {}".format(kv))
@@ -607,6 +615,9 @@ def cmd_preview(args):
     print("标题     : {}".format(ani.get("title", "-")))
     print("RSS      : {}".format(ani.get("url", "-")))
     print("类型     : {}  字幕组: {}".format(ani.get("type", "-"), ani.get("subgroup", "-")))
+    match_list = ani.get("match")
+    if match_list:
+        print("标题匹配 : {}".format(", ".join(match_list)))
     if ani.get("bgmUrl"):
         print("BGM      : {}".format(ani["bgmUrl"]))
     print("== 预览命中 ==")
@@ -628,6 +639,9 @@ def cmd_subscribe(args):
     print("  标题 : {}".format(ani.get("title", "-")))
     print("  RSS  : {}".format(ani.get("url", "-")))
     print("  字幕组: {}  启用: {}".format(ani.get("subgroup", "-"), fmt_bool(ani.get("enable", True))))
+    match_list = ani.get("match")
+    if match_list:
+        print("  标题匹配: {}".format(", ".join(match_list)))
     if args.dry_run:
         print("(--dry-run) 未实际添加，生成的订阅配置：")
         print_json(ani)
@@ -729,6 +743,8 @@ def cmd_set(args):
         ani["enable"] = True
     if getattr(args, "disable", False):
         ani["enable"] = False
+    if getattr(args, "match", None):
+        ani["match"] = list(args.match)
     for kv in getattr(args, "set_fields", None) or []:
         if kv.count("=") != 1:
             raise CliError("--set 参数格式应为 key=value: {}".format(kv))
@@ -838,6 +854,7 @@ def build_parser():
     pm_s.set_defaults(func=cmd_mikan)
     pm_g = pm_sub.add_parser("groups", parents=[common], help="获取字幕组 RSS")
     pm_g.add_argument("url", help="Mikan 番剧页面 URL")
+    pm_g.add_argument("--items", action="store_true", help="同时列出该字幕组上传的版本标题")
     pm_g.set_defaults(func=cmd_mikan_groups)
 
     # anibt
@@ -883,6 +900,7 @@ def build_parser():
         sp.add_argument("--season", type=int, help="覆盖季度（如 20263）")
         sp.add_argument("--offset", type=int, help="集数偏移")
         sp.add_argument("--download-new", action="store_true", help="只下载最新集")
+        sp.add_argument("--match", dest="match", action="append", metavar="关键词", help="标题关键词匹配（正则，可重复），用于筛选同一字幕组内的不同版本，仅命中全部关键词的资源才下载")
         sp.add_argument("--set", dest="set_fields", action="append", metavar="k=v", help="覆盖任意 Ani 字段")
 
     pp = sub.add_parser("preview", parents=[common], help="预览订阅命中")
@@ -923,6 +941,7 @@ def build_parser():
     ps.add_argument("--enable", action="store_true", help="启用")
     ps.add_argument("--disable", action="store_true", help="停用")
     ps.add_argument("--move", action="store_true", help="同步移动已下载文件到新目录")
+    ps.add_argument("--match", dest="match", action="append", metavar="关键词", help="标题关键词匹配（正则，可重复），覆盖订阅的标题匹配列表")
     ps.add_argument("--set", dest="set_fields", action="append", metavar="k=v", help="直接设置任意字段")
     ps.add_argument("--dry-run", action="store_true", help="只打印将写入的配置，不调用")
     ps.set_defaults(func=cmd_set)
