@@ -21,7 +21,7 @@
 git clone https://github.com/loopout9207-prog/ani-rss-cli.git
 ```
 
-> 仓库当前为**私人**仓库，克隆需要你的 GitHub 账号有访问权限。
+
 
 ### OpenClaw
 
@@ -56,13 +56,7 @@ mkdir -p ~/.agents/skills
 cp -r ani-rss-cli ~/.agents/skills/
 ```
 
-或在 `~/.config/opencode/opencode.json` 中显式注册：
 
-```json
-{
-  "skills": { "paths": ["C:/Users/<你>/ani-rss-cli"] }
-}
-```
 
 > opencode 配置是启动时加载的，改动后需**重启 opencode** 才会生效。
 
@@ -113,11 +107,7 @@ cp -r ani-rss-cli ~/.agents/skills/
 
 > 配置会保存在 `~/.config/ani_rss_cli/config.json`，只做一次；之后搜索、订阅、管理只需直接用自然语言下指令。
 
-## 安全说明
 
-- 配置文件 `~/.config/ani_rss_cli/config.json` 含 API Key / 密码 / 登录令牌，**已列入 `.gitignore`，切勿提交到仓库**。
-- CLI 输出与提示词都要求掩码敏感字段；如发现问题请提醒 Agent 用 `config get` 自查（敏感项显示为 `***`）。
-- 订阅、删除等写操作默认有确认提示，Agent 需要你确认后才执行。
 
 ## 完整文档
 
