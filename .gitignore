@@ -1,0 +1,7 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 本 CLI 运行时凭据/配置（含 API Key、密码、登录令牌），禁止上传
+config.json
+*.log
