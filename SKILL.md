@@ -1,6 +1,6 @@
 ---
-name: ani-rss-cli
-description: 通过 ani-rss-cli（基于 ANI-RSS REST API 的命令行工具）自动追番、订阅番剧。当用户想订阅/添加番剧、搜索 Mikan/AniBT/AnimeGarden 资源、管理 ani-rss 订阅（查看/启用/停用/删除/刷新/批量导入）、预览番剧订阅命中时，使用此 skill。
+name: ani-rss-Agent_Skill
+description: 通过 ani-rss-Agent_Skill（基于 ANI-RSS REST API 的命令行工具）自动追番、订阅番剧。当用户想订阅/添加番剧、搜索 Mikan/AniBT/AnimeGarden 资源、管理 ani-rss 订阅（查看/启用/停用/删除/刷新/批量导入）、预览番剧订阅命中时，使用此 skill。
 ---
 
 # ANI-RSS 番剧订阅 CLI
@@ -26,7 +26,7 @@ python3 --version
 CLI="<本 skill 目录>/scripts/ani_rss_cli.py"
 ```
 
-> - 在 WSL / Linux 下常见路径：`/mnt/c/Users/<用户名>/.agents/skills/ani-rss-cli/scripts/ani_rss_cli.py`
+> - 在 WSL / Linux 下常见路径：`/mnt/c/Users/<用户名>/.agents/skills/ani-rss-Agent_Skill/scripts/ani_rss_cli.py`
 > - 在 Windows PowerShell 下执行：`wsl python3 /mnt/c/Users/<用户名>/.../ani_rss_cli.py <命令>`
 > - 可选：`ln -s "$CLI" ~/.local/bin/ani-rss` 后可直接用 `ani-rss <命令>`。
 

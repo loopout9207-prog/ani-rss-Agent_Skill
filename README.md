@@ -1,4 +1,4 @@
-# ani-rss-cli
+# ani-rss-Agent_Skill
 
 **给 AI 使用的番剧订阅技能** —— 让 Agent 通过你已部署的 [ANI-RSS](https://github.com/HisAtri/AniRss) 实例（REST API，默认 `7789` 端口）自动搜番、预览命中、添加与管理订阅。
 
@@ -18,7 +18,7 @@
 仓库根目录即技能目录（含 `SKILL.md` 与 `scripts/`），先克隆到本地：
 
 ```bash
-git clone https://github.com/loopout9207-prog/ani-rss-cli.git
+git clone https://github.com/loopout9207-prog/ani-rss-Agent_Skill.git
 ```
 
 
@@ -29,10 +29,10 @@ git clone https://github.com/loopout9207-prog/ani-rss-cli.git
 
 ```bash
 # 安装到当前 agent 工作区
-openclaw skills install git:loopout9207-prog/ani-rss-cli
+openclaw skills install git:loopout9207-prog/ani-rss-Agent_Skill
 
 # 或安装为全局（所有本地 agent 共享）
-openclaw skills install git:loopout9207-prog/ani-rss-cli --global
+openclaw skills install git:loopout9207-prog/ani-rss-Agent_Skill --global
 ```
 
 验证：
@@ -43,17 +43,17 @@ openclaw skills list
 
 ### opencode
 
-将克隆下来的 `ani-rss-cli` 目录放进以下任一技能目录：
+将克隆下来的 `ani-rss-Agent_Skill` 目录放进以下任一技能目录：
 
 | 范围 | 路径 |
 |---|---|
-| 全局技能 | `~/.config/opencode/skills/ani-rss-cli/` |
-| 外部自动加载 | `~/.agents/skills/ani-rss-cli/` |
+| 全局技能 | `~/.config/opencode/skills/ani-rss-Agent_Skill/` |
+| 外部自动加载 | `~/.agents/skills/ani-rss-Agent_Skill/` |
 
 ```bash
 # 以外部自动加载目录为例
 mkdir -p ~/.agents/skills
-cp -r ani-rss-cli ~/.agents/skills/
+cp -r ani-rss-Agent_Skill ~/.agents/skills/
 ```
 
 
@@ -63,7 +63,7 @@ cp -r ani-rss-cli ~/.agents/skills/
 ### 说明
 
 - opencode 与 OpenClaw 都自动扫描 `~/.agents/skills/`，把技能放进该目录即可一份共享、两处生效。
-- 目录名须与 `SKILL.md` 中 `name`（`ani-rss-cli`）一致。
+- 目录名须与 `SKILL.md` 中 `name`（`ani-rss-Agent_Skill`）一致。
 - 技能加载后，对话中提及「订阅番剧 / 追番 / 管理 ani-rss」即可自动触发。
 
 ## 首次使用：让 AI 自动完成认证与配置
@@ -78,7 +78,7 @@ cp -r ani-rss-cli ~/.agents/skills/
 ### 通用提示词（OpenClaw / opencode 均可）
 
 ```text
-请加载 ani-rss-cli 技能并按照 SKILL.md 的流程工作：
+请加载 ani-rss-Agent_Skill 技能并按照 SKILL.md 的流程工作：
 1. 先读取技能目录中的 SKILL.md，了解命令与用法；
 2. 询问我 ani-rss 实例的 base_url 与鉴权方式（API Key，或 用户名/密码）；
 3. 收到后由你自动执行配置初始化、连通性检测（ping），不要让我自己输入命令；
@@ -88,7 +88,7 @@ cp -r ani-rss-cli ~/.agents/skills/
 ### opencode 示例
 
 ```text
-使用 ani-rss-cli 技能帮我配置 ani-rss 连接并订阅番剧。
+使用 ani-rss-Agent_Skill 技能帮我配置 ani-rss 连接并订阅番剧。
 流程：加载技能 → 读取 SKILL.md → 问我实例地址和 apiKey/账号密码
 → 你自动执行 config init 和 ping 验证 → 汇报结果后等我下指令。
 全程由你运行命令，我只提供连接信息。
@@ -97,7 +97,7 @@ cp -r ani-rss-cli ~/.agents/skills/
 ### OpenClaw 示例
 
 ```text
-请启用 ani-rss-cli 技能。步骤：
+请启用 ani-rss-Agent_Skill 技能。步骤：
 1. 阅读技能内的 SKILL.md；
 2. 向我询问 ani-rss 的访问地址与鉴权凭据（apiKey 或用户名密码）；
 3. 自动完成初始化与连通性测试并给我结论；
